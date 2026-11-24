@@ -1,4 +1,4 @@
-/* Renderização do catálogo e das páginas de cada calculadora. */
+/* Renderização do menu, do catálogo e das páginas de cada calculadora. */
 (function () {
   "use strict";
   const CAT = window.CATALOGO;
@@ -28,6 +28,13 @@
     return CAT.grupos.find((g) => g.id === id);
   }
 
+  /* ---------- Menu superior: um atalho por grupo ---------- */
+  function renderMenu() {
+    $("topnav").innerHTML = CAT.grupos
+      .map((g) => `<a href="#grupo-${esc(g.id)}">${esc(g.curto || g.titulo)}</a>`)
+      .join("");
+  }
+
   /* ---------- Catálogo (home) ---------- */
   function renderCatalogo() {
     const html = CAT.grupos
@@ -43,8 +50,8 @@
             </a>`
           )
           .join("");
-        return `<section class="grupo" aria-labelledby="g-${g.id}">
-          <h2 id="g-${g.id}">${esc(g.titulo)}</h2>
+        return `<section class="grupo" id="grupo-${esc(g.id)}" aria-labelledby="g-${esc(g.id)}">
+          <h2 id="g-${esc(g.id)}">${esc(g.titulo)}</h2>
           <div class="tiles">${tiles}</div>
         </section>`;
       })
@@ -96,7 +103,9 @@
         (it) => `<div${it.destaque ? ' class="destaque"' : ""}><dt>${esc(it.rot)}</dt><dd>${esc(formatar(it.tipo, it.valor))}</dd></div>`
       )
       .join("");
+    const grafico = res.grafico && window.Graficos ? window.Graficos.renderizar(res.grafico) : "";
     return `<dl class="resumo">${itens}</dl>
+      ${grafico}
       ${res.explica ? `<p class="explica">${esc(res.explica)}</p>` : ""}
       ${res.aviso ? `<p class="aviso">${esc(res.aviso)}</p>` : ""}
       ${res.formula ? `<details class="detalhe"><summary>Ver a conta</summary><pre class="formula">${esc(res.formula)}</pre></details>` : ""}`;
@@ -109,7 +118,7 @@
       <header class="calc-cabeca">
         <p class="calc-cmd">$ ${esc(item.cmd)}</p>
         <h1 class="calc-titulo">${esc(item.titulo)}</h1>
-        <p class="calc-desc">${esc(item.desc)}${g ? ` <span class="grupo-tag">${esc(g.titulo)}</span>` : ""}</p>
+        <p class="calc-desc">${esc(item.desc)}${g ? ` <a class="grupo-tag" href="#grupo-${esc(g.id)}">${esc(g.titulo)}</a>` : ""}</p>
       </header>
       <div class="calc-grade">
         <form class="painel entrada" id="form-calc" novalidate>
@@ -141,9 +150,10 @@
   }
 
   /* ---------- Roteamento por hash ---------- */
+  // #id abre a calculadora; #grupo-id mostra o catálogo e rola até o grupo.
   function rota() {
-    const id = decodeURIComponent(location.hash.slice(1));
-    const item = CAT.itens.find((i) => i.id === id);
+    const hash = decodeURIComponent(location.hash.slice(1));
+    const item = CAT.itens.find((i) => i.id === hash);
     const home = !item;
     $("hero").hidden = !home;
     $("catalogo").hidden = !home;
@@ -151,12 +161,21 @@
     if (item) {
       document.title = `${item.titulo} — Finanças`;
       renderDetalhe(item);
-    } else {
-      document.title = "Finanças — calculadoras claras";
+      window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
+      return;
+    }
+    document.title = "Finanças — calculadoras claras";
+    if (hash.startsWith("grupo-")) {
+      const alvo = document.getElementById(hash);
+      if (alvo) {
+        alvo.scrollIntoView({ block: "start" });
+        return;
+      }
     }
     window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
   }
 
+  renderMenu();
   renderCatalogo();
   window.addEventListener("hashchange", rota);
   rota();

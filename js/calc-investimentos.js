@@ -158,6 +158,19 @@
               { rot: "Juros", valor: r.juros, tipo: "dinheiro" },
               { rot: "Montante final", valor: r.montante, tipo: "dinheiro", destaque: true },
             ],
+            grafico: (() => {
+            const n = Math.max(1, Math.floor(v.meses));
+            const i = v.taxa / 100;
+            const rotulos = [];
+            const simples = [];
+            const compostos = [];
+            for (let m = 0; m <= n; m++) {
+              rotulos.push(String(m));
+              simples.push(v.principal * (1 + i * m));
+              compostos.push(v.principal * Math.pow(1 + i, m));
+            }
+            return { tipo: "linha", titulo: "Crescimento mês a mês", rotulos, series: [{ rot: "Juros compostos", valores: compostos, cor: "#ff9f0a" }, { rot: "Juros simples", valores: simples }], formato: "dinheiro" };
+          })(),
             explica: `Os juros são sempre calculados sobre ${brl(v.principal)}, por isso crescem em linha reta.`,
             formula: "M = P × (1 + i × n)",
           };
@@ -189,6 +202,7 @@
           const itens = r.opcoes.map((o) => ({ rot: o.nome, valor: o.liquido, tipo: "dinheiro", destaque: o.nome === r.melhor }));
           return {
             itens,
+            grafico: { tipo: "barras", titulo: "Valor líquido no fim do prazo", dados: r.opcoes.map((o) => ({ rot: o.nome, valor: o.liquido, destaque: o.nome === r.melhor })), formato: "dinheiro" },
             explica: `Com estes números, a melhor opção líquida é ${r.melhor}. A poupança rende cerca de ${r.poupancaAnualPct.toFixed(2).replace(".", ",")}% ao ano com a Selic informada.`,
             formula: "rendimento = valor × ((1 + taxa anual)^(dias/365) − 1)\nIR regressivo no CDB: 22,5% até 180 dias; 20% até 360; 17,5% até 720; 15% acima",
             aviso: "Não inclui IOF nem taxas de corretora. Taxas de CDB e LCI variam por banco.",
@@ -214,6 +228,7 @@
               { rot: `IR (${(r.aliquota * 100).toFixed(1).replace(".", ",")}%)`, valor: r.ir, tipo: "dinheiro" },
               { rot: "Total líquido", valor: r.liquido, tipo: "dinheiro", destaque: true },
             ],
+            grafico: { tipo: "rosca", titulo: "Composição do valor final", dados: [{ rot: "Valor aplicado", valor: r.valor }, { rot: "Rendimento líquido", valor: r.rendimentoLiquido, destaque: true }, { rot: "Imposto de Renda", valor: r.ir }], formato: "dinheiro" },
             explica: `Rendimento líquido de ${brl(r.rendimentoLiquido)} depois do IR.`,
             formula: "IR = rendimento bruto × alíquota regressiva pelo prazo",
             aviso: "Não inclui IOF (só para resgates em até 30 dias) nem taxas de custódia.",
@@ -237,6 +252,7 @@
               { rot: "Capital necessário", valor: cap, tipo: "dinheiro", destaque: true },
               { rot: "Renda mensal", valor: v.renda, tipo: "dinheiro" },
             ],
+            grafico: { tipo: "colunas", titulo: "Capital necessário por taxa anual", dados: [4, 6, 8, 10, 12].map((t) => ({ rot: `${t}%`, valor: capitalParaRenda({ rendaMensal: v.renda, taxaAnualPct: t }), destaque: t === v.taxa })), formato: "dinheiro" },
             explica: `Com rendimento de ${v.taxa}% ao ano, o capital que paga ${brl(v.renda)} por mês é ${brl(cap)}.`,
             formula: "capital = renda mensal × 12 ÷ taxa anual",
             aviso: "Renda passiva de carteira: o rendimento varia, então isto é uma estimativa.",
@@ -266,6 +282,20 @@
               { rot: "Tempo até R$ 1 milhão", valor: `${anos} anos e ${meses} meses`, tipo: "texto", destaque: true },
               { rot: "Meses", valor: n, tipo: "inteiro" },
             ],
+            grafico: (() => {
+              const i = Math.pow(1 + v.taxa / 100, 1 / 12) - 1;
+              const fim = Math.min(n, 600);
+              const rotulos = [];
+              const patrimonio = [];
+              const meta = [];
+              for (let m = 0; m <= fim; m++) {
+                const cresc = i === 0 ? m : (Math.pow(1 + i, m) - 1) / i;
+                rotulos.push(String(m));
+                patrimonio.push(v.inicial * Math.pow(1 + i, m) + v.aporte * cresc);
+                meta.push(1000000);
+              }
+              return { tipo: "linha", titulo: "Patrimônio mês a mês", rotulos, series: [{ rot: "Patrimônio", valores: patrimonio }, { rot: "Meta de R$ 1 milhão", valores: meta, cor: "var(--texto-3)" }], formato: "dinheiro" };
+            })(),
             explica: `Aportando ${brl(v.aporte)} por mês, a ${v.taxa}% ao ano, você chega a R$ 1.000.000 em ${anos} anos e ${meses} meses.`,
             formula: "(1+i)^n = (F·i + A) ÷ (P·i + A)",
           };
@@ -285,6 +315,7 @@
           const valor = reservaEmergencia({ despesaMensal: v.despesa, meses: v.meses });
           return {
             itens: [{ rot: "Reserva recomendada", valor, tipo: "dinheiro", destaque: true }],
+            grafico: { tipo: "barras", titulo: "Quanto guardar em cada cenário", dados: [{ rot: "3 meses", valor: reservaEmergencia({ despesaMensal: v.despesa, meses: 3 }) }, { rot: "6 meses", valor: reservaEmergencia({ despesaMensal: v.despesa, meses: 6 }) }, { rot: `Sua escolha (${v.meses} meses)`, valor, destaque: true }], formato: "dinheiro" },
             explica: `Guardar ${v.meses} meses de despesas essenciais dá ${brl(valor)}. Muitos especialistas recomendam de 3 a 6 meses.`,
             formula: "reserva = despesa mensal × meses",
           };
@@ -308,6 +339,18 @@
               { rot: "Valor original", valor: v.valor, tipo: "dinheiro" },
               { rot: "Valor corrigido", valor: corrigido, tipo: "dinheiro", destaque: true },
             ],
+            grafico: (() => {
+              const n = Math.max(1, Math.floor(v.meses));
+              const rotulos = [];
+              const corrigido = [];
+              const original = [];
+              for (let m = 0; m <= n; m++) {
+                rotulos.push(String(m));
+                corrigido.push(correcaoPoupanca({ valor: v.valor, meses: m, taxaAnualPct: v.taxa }));
+                original.push(v.valor);
+              }
+              return { tipo: "linha", titulo: "Evolução mês a mês", rotulos, series: [{ rot: "Valor corrigido", valores: corrigido }, { rot: "Valor original", valores: original, cor: "var(--texto-3)" }], formato: "dinheiro" };
+            })(),
             explica: `Pela poupança, ${brl(v.valor)} viram ${brl(corrigido)} em ${v.meses} meses.`,
             formula: "valor × (1 + taxa anual)^(meses/12)",
             aviso: "Usa a taxa anual que você informar. A poupança real segue Selic e TR.",
@@ -328,6 +371,7 @@
           const reais = conversorMoeda({ valor: v.valor, cotacao: v.cotacao });
           return {
             itens: [{ rot: "Em reais", valor: reais, tipo: "dinheiro", destaque: true }],
+            grafico: { tipo: "colunas", titulo: "Quanto valem 1, 10, 100 e 1.000 unidades", dados: [1, 10, 100, 1000].map((u) => ({ rot: String(u), valor: conversorMoeda({ valor: u, cotacao: v.cotacao }), destaque: u === v.valor })), formato: "dinheiro" },
             explica: "Use a cotação do dia da compra, que varia; a da sua corretora ou banco pode ter taxa extra.",
             formula: "reais = valor × cotação",
           };
@@ -353,6 +397,7 @@
               { rot: "Valor presente líquido", valor: npv, tipo: "dinheiro", destaque: true },
               { rot: "Entradas informadas", valor: fluxos.length, tipo: "inteiro" },
             ],
+            grafico: { tipo: "barras", titulo: "Valor de hoje de cada parte", dados: [{ rot: "Investimento (ano 0)", valor: -v.investimento }].concat(fluxos.map((fl, k) => ({ rot: `Ano ${k + 1}`, valor: fl / Math.pow(1 + v.taxa / 100, k + 1) }))).concat([{ rot: "VPL (soma)", valor: npv, destaque: true }]), formato: "dinheiro" },
             explica: npv > 0 ? "VPL positivo: o investimento rende mais que a taxa de desconto." : "VPL negativo ou zero: a taxa de desconto não é coberta.",
             formula: "VPL = −investimento + soma(entrada_t ÷ (1 + i)^t)",
           };

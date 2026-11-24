@@ -184,6 +184,7 @@
           if (!Number.isFinite(n)) return { itens: [], explica: "Confira as datas: a final precisa ser depois da inicial." };
           return {
             itens: [{ rot: "Dias úteis", valor: n, tipo: "inteiro", destaque: true }],
+            grafico: { tipo: "rosca", titulo: "Dias do período", dados: [{ rot: "Dias úteis", valor: n, destaque: true }, { rot: "Fins de semana e feriados", valor: Math.round((b - a) / DIA_MS) + 1 - n }], formato: "inteiro" },
             explica: "Conta de segunda a sexta, incluindo as duas datas, sem os feriados nacionais.",
             aviso: "Não inclui feriados estaduais e municipais nem pontos facultativos.",
           };
@@ -208,6 +209,7 @@
               { rot: "Semanas", valor: Math.floor(dias / 7), tipo: "inteiro" },
               { rot: "Anos, meses e dias", valor: `${cal.anos} anos, ${cal.meses} meses e ${cal.dias} dias`, tipo: "texto" },
             ],
+            grafico: { tipo: "trilha", titulo: "Início e fim no calendário", min: a.getTime(), max: b.getTime(), marcas: [{ pos: a.getTime(), curto: "Início", rot: dataBR(a) }, { pos: b.getTime(), curto: "Fim", rot: dataBR(b), texto: `${dias} dias`, destaque: true }] },
             explica: `Entre ${dataBR(a)} e ${dataBR(b)} passaram ${dias} dias.`,
           };
         },
@@ -225,6 +227,7 @@
           const r = addDias(a, Number(v.dias) || 0);
           return {
             itens: [{ rot: "Data resultante", valor: r, tipo: "data", destaque: true }],
+            grafico: { tipo: "trilha", titulo: "Caminho pelo calendário", min: Math.min(a.getTime(), r.getTime()), max: Math.max(a.getTime(), r.getTime()), marcas: [{ pos: a.getTime(), curto: "Início", rot: dataBR(a) }, { pos: r.getTime(), curto: "Resultado", rot: dataBR(r), texto: `${v.dias} dias`, destaque: true }] },
             explica: `${dataBR(a)} mais ${v.dias} dias é ${dataBR(r)}, uma ${diaSemana(r)}.`,
           };
         },
@@ -241,6 +244,7 @@
           if (!d) return { itens: [], explica: "Informe uma data." };
           return {
             itens: [{ rot: "Dia da semana", valor: diaSemana(d), tipo: "texto", destaque: true }],
+            grafico: { tipo: "colunas", titulo: "Semana", dados: ["dom", "seg", "ter", "qua", "qui", "sex", "sáb"].map((nome, k) => ({ rot: nome, valor: 1, destaque: k === d.getUTCDay() })), formato: "nenhum" },
             explica: `${dataBR(d)} cai numa ${diaSemana(d)}.`,
           };
         },
@@ -264,6 +268,7 @@
               { rot: "Páscoa", valor: m.pascoa, tipo: "data", destaque: true },
               { rot: "Corpus Christi", valor: m.corpus, tipo: "data" },
             ],
+            grafico: { tipo: "trilha", titulo: "Feriados móveis no ano", min: m.carnaval.getTime() - 10 * DIA_MS, max: m.corpus.getTime() + 10 * DIA_MS, marcas: [{ pos: m.carnaval.getTime(), curto: "Carnaval", rot: "Carnaval (terça)", texto: dataBR(m.carnaval) }, { pos: m.cinzas.getTime(), curto: "Cinzas", rot: "Quarta-feira de Cinzas", texto: dataBR(m.cinzas) }, { pos: m.sextaSanta.getTime(), curto: "Sexta", rot: "Sexta-feira Santa", texto: dataBR(m.sextaSanta) }, { pos: m.pascoa.getTime(), curto: "Páscoa", rot: "Páscoa", texto: dataBR(m.pascoa), destaque: true }, { pos: m.corpus.getTime(), curto: "Corpus", rot: "Corpus Christi", texto: dataBR(m.corpus) }] },
             explica: `Em ${ano}, a Páscoa cai em ${dataBR(m.pascoa)}. As outras datas acompanham essa.`,
             formula: "Carnaval = Páscoa − 47 dias\nSexta-feira Santa = Páscoa − 2\nCorpus Christi = Páscoa + 60",
           };
@@ -283,6 +288,7 @@
               { rot: "Melhor dia para comprar", valor: r.melhor, tipo: "inteiro", destaque: true },
               { rot: "Prazo até o pagamento", valor: r.prazo, tipo: "inteiro" },
             ],
+            grafico: { tipo: "trilha", titulo: "Dias do mês", min: 1, max: 31, marcas: [{ pos: v.fechamento, curto: "Fecha", rot: `Fechamento da fatura (dia ${v.fechamento})` }, { pos: r.melhor, curto: "Compre", rot: `Melhor dia para comprar (dia ${r.melhor})`, destaque: true }, { pos: v.vencimento, curto: "Vence", rot: `Vencimento (dia ${v.vencimento})`, texto: `${r.prazo} dias de prazo` }] },
             explica: `Comprando a partir do dia ${r.melhor}, a compra cai na fatura seguinte e você tem cerca de ${r.prazo} dias para pagar.`,
             aviso: "Aproximado: meses com 28 ou 31 dias podem mudar o prazo em até um dia.",
           };
@@ -303,6 +309,7 @@
               { rot: "IMC", valor: i, tipo: "numero", destaque: true },
               { rot: "Classificação", valor: classeImc(i), tipo: "texto" },
             ],
+            grafico: { tipo: "faixa", titulo: "Em qual faixa você está", valor: i, min: 15, max: 40, zonas: [{ ate: 18.5, rot: "Abaixo do peso (até 18,5)", cor: "#64d2ff" }, { ate: 25, rot: "Peso normal (18,5 a 24,9)", cor: "var(--verde)" }, { ate: 30, rot: "Sobrepeso (25 a 29,9)", cor: "#ff9f0a" }, { ate: 40, rot: "Obesidade (30 ou mais)", cor: "var(--erro)" }], formato: "numero" },
             explica: "O IMC não diferencia massa muscular de gordura. Use como um sinal, não como diagnóstico.",
             formula: "IMC = peso ÷ altura²",
             aviso: "Não substitui avaliação médica.",
@@ -321,6 +328,7 @@
           if (!(r.max > 0)) return { itens: [], explica: "Informe a altura em centímetros." };
           return {
             itens: [{ rot: "Faixa ideal (IMC 18,5 a 24,9)", valor: `${r.min.toFixed(1).replace(".", ",")} kg a ${r.max.toFixed(1).replace(".", ",")} kg`, tipo: "texto", destaque: true }],
+            grafico: { tipo: "barras", titulo: "Faixa de peso em kg", dados: [{ rot: "Peso mínimo (IMC 18,5)", valor: r.min }, { rot: "Peso máximo (IMC 24,9)", valor: r.max, destaque: true }], formato: "numero" },
             formula: "peso = IMC × altura²",
             aviso: "Faixa de referência. Não substitui avaliação médica.",
           };
@@ -351,6 +359,7 @@
               { rot: "Gasto diário", valor: r.gasto, tipo: "inteiro", destaque: true },
               { rot: "Metabolismo basal", valor: r.tmb, tipo: "inteiro" },
             ],
+            grafico: { tipo: "barras", titulo: "Calorias por dia (kcal)", dados: [{ rot: "Metabolismo basal (repouso)", valor: r.tmb }, { rot: "Gasto com a rotina", valor: r.gasto, destaque: true }, { rot: "Para emagrecer (−500)", valor: r.gasto - 500 }, { rot: "Para ganhar massa (+300)", valor: r.gasto + 300 }], formato: "inteiro" },
             explica: "Gasto diário = metabolismo basal × fator de atividade. É o que você queima com a rotina informada.",
             formula: "TMB = 10·peso + 6,25·altura − 5·idade + (5 homem | −161 mulher)\ngasto = TMB × fator",
             aviso: "Estimativa pela fórmula de Mifflin-St Jeor.",
@@ -375,6 +384,19 @@
               { rot: "Calorias por dia", valor: r.dieta, tipo: "inteiro", destaque: true },
               { rot: "Prazo estimado (semanas)", valor: r.semanas, tipo: "inteiro" },
             ],
+            grafico: (() => {
+              const alvo = Number(v.pesoAlvo);
+              const semanas = Math.min(104, r.semanas);
+              const rotulos = [];
+              const peso = [];
+              const meta = [];
+              for (let s = 0; s <= semanas; s++) {
+                rotulos.push(String(s));
+                peso.push(Math.max(alvo, v.pesoAtual - s * KG_POR_SEMANA_DEFICIT));
+                meta.push(alvo);
+              }
+              return { tipo: "linha", titulo: "Peso semana a semana (kg)", rotulos, series: [{ rot: "Peso estimado", valores: peso }, { rot: "Peso desejado", valores: meta, cor: "var(--texto-3)" }], formato: "numero" };
+            })(),
             explica: "Com 500 kcal a menos por dia, a perda fica perto de meio quilo por semana. Ritmo maior exige acompanhamento.",
             formula: "dieta = gasto − 500 kcal\nsemanas = perda ÷ 0,45 kg",
             aviso: "Estimativa. Procure orientação de nutricionista ou médico.",
@@ -398,6 +420,7 @@
               { rot: "Calorias por dia", valor: r.meta, tipo: "inteiro", destaque: true },
               { rot: "Ganho estimado por mês", valor: r.ganhoMes, tipo: "numero" },
             ],
+            grafico: { tipo: "barras", titulo: "Calorias por dia (kcal)", dados: [{ rot: "Gasto atual", valor: v.gasto }, { rot: "Meta para ganhar massa", valor: r.meta, destaque: true }], formato: "inteiro" },
             explica: "Um superávit pequeno de 300 kcal por dia, com treino de força e proteína suficiente. O ganho real depende do treino.",
             formula: "meta = gasto + 300 kcal",
             aviso: "Estimativa para iniciantes em treino de força. Procure orientação profissional.",
@@ -419,6 +442,7 @@
           if (!Number.isFinite(p)) return { itens: [], explica: "O método só se aplica quando o lucro e o patrimônio por ação são positivos." };
           return {
             itens: [{ rot: "Preço justo", valor: p, tipo: "dinheiro", destaque: true }],
+            grafico: { tipo: "barras", titulo: "Preço justo se o lucro por ação mudar", dados: [0.5, 1, 1.5, 2].map((fator) => ({ rot: `Lucro × ${String(fator).replace(".", ",")}`, valor: graham({ lpa: v.lpa * fator, vpa: v.vpa }), destaque: fator === 1 })), formato: "dinheiro" },
             explica: "Método simplificado de Benjamin Graham. Não é recomendação de compra.",
             formula: "preço justo = √(22,5 × LPA × VPA)",
             aviso: "Não é recomendação de investimento. Pesquise a empresa antes de decidir.",
@@ -440,6 +464,7 @@
           if (!Number.isFinite(p)) return { itens: [], explica: "Informe uma taxa maior que zero." };
           return {
             itens: [{ rot: "Preço-teto", valor: p, tipo: "dinheiro", destaque: true }],
+            grafico: { tipo: "barras", titulo: "Preço-teto para taxas diferentes", dados: [4, 6, 8, 10, 12].map((t) => ({ rot: `Taxa de ${t}% ao ano`, valor: bazin({ dividendos: v.dividendos, taxaPct: t }), destaque: t === v.taxa })), formato: "dinheiro" },
             explica: "Acima desse preço, o dividendo rende menos que a taxa que você quer. Não é recomendação de compra.",
             formula: "preço-teto = dividendos ÷ taxa mínima",
             aviso: "Depende de dividendos se repetirem. Não é recomendação de investimento.",
@@ -462,6 +487,7 @@
           if (!Number.isFinite(p)) return { itens: [], explica: "O modelo só se aplica quando o retorno exigido é maior que o crescimento." };
           return {
             itens: [{ rot: "Preço justo", valor: p, tipo: "dinheiro", destaque: true }],
+            grafico: { tipo: "barras", titulo: "Preço justo para crescimentos diferentes", dados: [2, 4, 6, 8].map((g) => ({ rot: `Crescimento de ${g}% ao ano`, valor: gordon({ d0: v.d0, k: v.k, g }), destaque: g === v.g })), formato: "dinheiro" },
             explica: "Modelo de Gordon: supõe que os dividendos crescem sempre na mesma taxa. Não é recomendação de compra.",
             formula: "preço = D0 × (1 + g) ÷ (k − g)",
             aviso: "Não é recomendação de investimento.",

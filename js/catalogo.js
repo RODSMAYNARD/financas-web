@@ -27,14 +27,14 @@
   "use strict";
 
   const GRUPOS = [
-    { id: "investimentos", titulo: "Investimentos" },
-    { id: "credito", titulo: "Crédito e dívidas" },
-    { id: "negocios", titulo: "Negócios" },
-    { id: "trabalho", titulo: "Trabalho" },
-    { id: "impostos", titulo: "Impostos" },
-    { id: "cotidiano", titulo: "Datas e cotidiano" },
-    { id: "saude", titulo: "Saúde" },
-    { id: "acoes", titulo: "Ações" },
+    { id: "investimentos", titulo: "Investimentos", curto: "investimentos" },
+    { id: "credito", titulo: "Crédito e dívidas", curto: "crédito" },
+    { id: "negocios", titulo: "Negócios", curto: "negócios" },
+    { id: "trabalho", titulo: "Trabalho", curto: "trabalho" },
+    { id: "impostos", titulo: "Impostos", curto: "impostos" },
+    { id: "cotidiano", titulo: "Datas e cotidiano", curto: "datas" },
+    { id: "saude", titulo: "Saúde", curto: "saúde" },
+    { id: "acoes", titulo: "Ações", curto: "ações" },
   ];
 
   const ITENS = [];

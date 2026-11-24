@@ -29,6 +29,19 @@
             { rot: "Juros acumulados", valor: r.juros, tipo: "dinheiro" },
             { rot: "Montante final", valor: r.montante, tipo: "dinheiro", destaque: true },
           ],
+          grafico: (() => {
+            const anos = Math.max(1, Math.round(v.anos));
+            const rotulos = [];
+            const investido = [];
+            const montante = [];
+            for (let a = 0; a <= anos; a++) {
+              const m = a * 12;
+              rotulos.push(String(a));
+              investido.push(v.inicial + v.aporte * m);
+              montante.push(m === 0 ? v.inicial : C.jurosCompostos({ inicial: v.inicial, aporte: v.aporte, taxaAnual: v.taxa, meses: m }).montante);
+            }
+            return { tipo: "linha", titulo: "Crescimento ano a ano", rotulos, series: [{ rot: "Montante", valores: montante }, { rot: "Total investido", valores: investido, cor: "var(--texto-3)" }], formato: "dinheiro" };
+          })(),
           explica: `Em ${meses} meses você colocou ${brl(r.totalInvestido)}. Os juros são ${parte}% do montante final.`,
           formula: "M = P·(1+i)^n + A·((1+i)^n − 1) / i\ni = (1 + taxa anual)^(1/12) − 1",
         };
@@ -52,6 +65,7 @@
             { rot: "Diferença", valor: r.diferenca, tipo: "dinheiro" },
             { rot: "Valor corrigido", valor: r.valorCorrigido, tipo: "dinheiro", destaque: true },
           ],
+          grafico: { tipo: "barras", titulo: "Antes e depois da correção", dados: [{ rot: "Valor original", valor: r.valorOriginal }, { rot: "Valor corrigido", valor: r.valorCorrigido, destaque: true }], formato: "dinheiro" },
           explica: `Para manter o mesmo poder de compra, o valor precisa virar ${brl(r.valorCorrigido)} no período.`,
           formula: "valor corrigido = valor original × (1 + variação)",
         };
@@ -75,6 +89,7 @@
             { rot: "Imposto de Renda", valor: r.irrf, tipo: "dinheiro" },
             { rot: "Salário líquido", valor: r.liquido, tipo: "dinheiro", destaque: true },
           ],
+          grafico: { tipo: "rosca", titulo: "Para onde vai o salário bruto", dados: [{ rot: "Salário líquido", valor: r.liquido, destaque: true }, { rot: "INSS", valor: r.inss }, { rot: "Imposto de Renda", valor: r.irrf }], formato: "dinheiro" },
           explica: `Os descontos somam ${brl(r.descontoTotal)}.`,
           formula: `INSS (faixas progressivas)  ${r.inss.toFixed(2)}\nbase do IR = bruto − INSS − dependentes × ${C.CONFIG.deducaoDependente}\nIR pela tabela               ${r.irrfTabela.toFixed(2)}\nredução (faixa até 7.350)    ${r.reducaoIRRF.toFixed(2)}\nIR a pagar                   ${r.irrf.toFixed(2)}`,
           aviso: "Tabelas de referência. Confira INSS e IRRF nas fontes oficiais.",

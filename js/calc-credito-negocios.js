@@ -176,7 +176,21 @@
               { rot: "SAC: última parcela", valor: s.ultima, tipo: "dinheiro" },
               { rot: "SAC: total pago", valor: s.total, tipo: "dinheiro", destaque: true },
             ],
-            explica: `O SAC costuma pagar menos juros no total. Com estes números, o mais barato é ${maisBarato}. A diferença de juros entre os dois é ${brl(Math.abs(p.total - s.total))}.`,
+            grafico: (() => {
+              const n = Math.max(1, Math.floor(v.meses));
+              const i = v.taxa / 100;
+              const P = v.valor;
+              const rotulos = [];
+              const sac = [];
+              const price = [];
+              for (let k = 0; k <= n; k++) {
+                rotulos.push(String(k));
+                sac.push(P * (1 - k / n));
+                price.push(i === 0 ? P * (1 - k / n) : (P * (Math.pow(1 + i, n) - Math.pow(1 + i, k))) / (Math.pow(1 + i, n) - 1));
+              }
+              return { tipo: "linha", titulo: "Quanto ainda falta pagar (mês a mês)", rotulos, series: [{ rot: "SAC", valores: sac }, { rot: "Price", valores: price, cor: "#ff9f0a" }], formato: "dinheiro" };
+            })(),
+          explica: `O SAC costuma pagar menos juros no total. Com estes números, o mais barato é ${maisBarato}. A diferença de juros entre os dois é ${brl(Math.abs(p.total - s.total))}.`,
             formula: "Price: P·i ÷ (1 − (1+i)^−n)\nSAC: amortização = P ÷ n; parcela_k = amortização + (saldo devedor)·i",
             aviso: "Não inclui seguros, tarifas nem TR. Confira o CET no contrato.",
           };
@@ -201,6 +215,7 @@
               { rot: "Total pago", valor: p.total, tipo: "dinheiro" },
               { rot: "Juros", valor: p.juros, tipo: "dinheiro" },
             ],
+            grafico: { tipo: "rosca", titulo: "Quanto sai no total", dados: [{ rot: "Valor emprestado", valor: v.valor }, { rot: "Juros", valor: p.juros, destaque: true }], formato: "dinheiro" },
             explica: `Você paga ${brl(p.parcela)} por mês durante ${v.meses} meses, e os juros somam ${brl(p.juros)}.`,
             formula: "parcela = P·i ÷ (1 − (1+i)^−n)  (Tabela Price)",
             aviso: "Consignado tem limite de comprometimento da renda. Confira a taxa no contrato.",
@@ -230,6 +245,7 @@
               { rot: "Taxa anual equivalente", valor: anual, tipo: "percentual" },
               { rot: "Total no parcelado", valor: v.parcela * v.n, tipo: "dinheiro" },
             ],
+            grafico: { tipo: "barras", titulo: "Preço à vista e total parcelado", dados: [{ rot: "Preço à vista", valor: v.vista }, { rot: `Total em ${v.n} parcelas`, valor: v.parcela * v.n, destaque: true }], formato: "dinheiro" },
             explica: `Pagar em ${v.n} parcelas de ${brl(v.parcela)} equivale a pagar juros de ${(i * 100).toFixed(2).replace(".", ",")}% ao mês.`,
             formula: "vista = parcela × (1 − (1+i)^−n) ÷ i   (1ª parcela daqui a 1 mês; i resolvido por bisseção)",
           };
@@ -254,6 +270,19 @@
               { rot: "Juros cobrados", valor: r.juros, tipo: "dinheiro" },
               { rot: "Taxa anual equivalente", valor: r.taxaAnualPct, tipo: "percentual" },
             ],
+            grafico: (() => {
+              const n = Math.max(1, Math.floor(v.meses));
+              const i = v.taxa / 100;
+              const rotulos = [];
+              const saldo = [];
+              const divida = [];
+              for (let m = 0; m <= n; m++) {
+                rotulos.push(String(m));
+                saldo.push(v.divida * Math.pow(1 + i, m));
+                divida.push(v.divida);
+              }
+              return { tipo: "linha", titulo: "Saldo mês a mês, sem pagar", rotulos, series: [{ rot: "Saldo da dívida", valores: saldo }, { rot: "Dívida inicial", valores: divida, cor: "var(--texto-3)" }], formato: "dinheiro" };
+            })(),
             explica: `Com ${v.meses} meses no rotativo, a dívida de ${brl(v.divida)} vira ${brl(r.saldo)}.`,
             formula: "saldo = dívida × (1 + i)^meses",
             aviso: "Simulação sem pagamentos intermediários. Para o parcelamento da fatura, a conta muda.",
@@ -293,6 +322,7 @@
               { rot: "Custo total alugando", valor: r.custoAluguel, tipo: "dinheiro" },
               { rot: "Diferença", valor: Math.abs(r.diferenca), tipo: "dinheiro", destaque: true },
             ],
+            grafico: { tipo: "barras", titulo: "Custo total no período", dados: [{ rot: "Financiando", valor: r.custoFinanciar, destaque: melhor === "financiar" }, { rot: "Alugando", valor: r.custoAluguel, destaque: melhor === "alugar" }], formato: "dinheiro" },
             explica: `Pelos números informados, ${melhor} custa menos. A conta não considera a valorização do imóvel, IPTU, condomínio nem manutenção.`,
             formula: "financiando = entrada + total pago + entrada × ((1+r)^anos − 1)\nalugando = soma do aluguel anual com reajuste",
             aviso: "Comparação simplificada. Use como ponto de partida, não como decisão final.",
@@ -320,6 +350,7 @@
               { rot: "Lucro em reais", valor: r.lucro, tipo: "dinheiro" },
               { rot: "Descontos (impostos e taxas)", valor: r.descontos, tipo: "dinheiro" },
             ],
+            grafico: { tipo: "rosca", titulo: "Para onde vai cada real do preço", dados: [{ rot: "Custo do produto", valor: v.custo }, { rot: "Impostos", valor: (r.preco * v.impostos) / 100 }, { rot: "Comissão ou taxa", valor: (r.preco * v.comissao) / 100 }, { rot: "Seu lucro", valor: r.lucro, destaque: true }], formato: "dinheiro" },
             explica: `Vendendo por ${brl(r.preco)}, sobram ${brl(r.lucro)} de lucro depois de impostos e taxas.`,
             formula: "preço = custo ÷ (1 − (impostos + comissão + lucro)/100)",
           };
@@ -342,6 +373,7 @@
               { rot: "Margem sobre a venda", valor: r.margemVenda, tipo: "percentual", destaque: true },
               { rot: "Markup sobre o custo", valor: r.markup, tipo: "percentual" },
             ],
+            grafico: { tipo: "barras", titulo: "Custo, preço e lucro", dados: [{ rot: "Custo", valor: v.custo }, { rot: "Preço de venda", valor: v.preco, destaque: true }, { rot: "Lucro (preço − custo)", valor: v.preco - v.custo }], formato: "dinheiro" },
             explica: "Margem é a parte do preço que sobra como lucro. Markup é quanto o preço cresce sobre o custo. Os dois números são diferentes.",
             formula: "margem = (preço − custo) ÷ preço\nmarkup = (preço − custo) ÷ custo",
           };
@@ -368,6 +400,19 @@
               { rot: "Vendas necessárias por mês", valor: r.quantidade, tipo: "inteiro", destaque: true },
               { rot: "Receita de equilíbrio", valor: r.receita, tipo: "dinheiro" },
             ],
+            grafico: (() => {
+              const xmax = Math.max(10, Math.ceil(r.quantidade * 1.5));
+              const passo = Math.ceil(xmax / 40);
+              const rotulos = [];
+              const receita = [];
+              const custo = [];
+              for (let x = 0; x <= xmax; x += passo) {
+                rotulos.push(String(x));
+                receita.push(x * v.preco);
+                custo.push(v.fixos + x * v.variavel);
+              }
+              return { tipo: "linha", titulo: "Receita e custos por unidade vendida", rotulos, series: [{ rot: "Receita", valores: receita }, { rot: "Custo total", valores: custo, cor: "#ff9f0a" }], formato: "dinheiro" };
+            })(),
             explica: `Você precisa vender ${r.quantidade} unidades por mês para cobrir os custos. Cada venda contribui com ${brl(v.preco - v.variavel)}.`,
             formula: "quantidade = custos fixos ÷ (preço − custo variável)",
           };
@@ -390,6 +435,7 @@
               { rot: "Taxa cobrada", valor: r.taxa, tipo: "dinheiro" },
               { rot: "Valor que entra", valor: r.liquido, tipo: "dinheiro", destaque: true },
             ],
+            grafico: { tipo: "rosca", titulo: "De cada venda", dados: [{ rot: "Valor que entra", valor: r.liquido, destaque: true }, { rot: "Taxa da maquininha", valor: r.taxa }], formato: "dinheiro" },
             explica: `De uma venda de ${brl(v.valor)}, a maquininha fica com ${brl(r.taxa)}.`,
             formula: "líquido = venda × (1 − taxa)",
             aviso: "Taxas variam por bandeira, tipo de cartão e número de parcelas.",
@@ -414,6 +460,7 @@
               { rot: "Valor mais o percentual", valor: r.mais, tipo: "dinheiro", destaque: true },
               { rot: "Valor menos o percentual", valor: r.menos, tipo: "dinheiro" },
             ],
+            grafico: { tipo: "barras", titulo: "Valor antes e depois do percentual", dados: [{ rot: `Valor menos ${v.pct}%`, valor: r.menos }, { rot: "Valor original", valor: v.base }, { rot: `Valor mais ${v.pct}%`, valor: r.mais, destaque: true }], formato: "dinheiro" },
             formula: "parte = valor × percentual ÷ 100",
           };
         },
@@ -438,6 +485,21 @@
               { rot: "Custo da viagem", valor: r.custo, tipo: "dinheiro", destaque: true },
               { rot: "Custo por km", valor: r.porKm, tipo: "dinheiro" },
             ],
+            grafico: (() => {
+              const km = Math.max(0, v.km);
+              const passo = Math.max(1, Math.ceil(km / 20));
+              const rotulos = [];
+              const custo = [];
+              for (let d = 0; d <= km; d += passo) {
+                rotulos.push(String(d));
+                custo.push((d / v.consumo) * v.preco);
+              }
+              if (rotulos[rotulos.length - 1] !== String(km)) {
+                rotulos.push(String(km));
+                custo.push((km / v.consumo) * v.preco);
+              }
+              return { tipo: "linha", titulo: "Custo conforme a distância (km)", rotulos, series: [{ rot: "Custo da viagem", valores: custo }], formato: "dinheiro" };
+            })(),
             explica: `A viagem de ${v.km} km custa ${brl(r.custo)} em combustível.`,
             formula: "litros = km ÷ consumo\ncusto = litros × preço do litro",
           };
