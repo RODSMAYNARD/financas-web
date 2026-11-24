@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Finanças — calculadoras claras</title>
-  <meta name="description" content="Calculadoras de juros compostos, correção de valores e salário líquido, explicadas em linguagem simples.">
+  <meta name="description" content="Calculadoras de finanças pessoais, trabalho, impostos, saúde e datas, explicadas em linguagem simples.">
   <meta name="color-scheme" content="dark">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,23 +13,23 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="marca" href="#inicio" aria-label="Início">
+    <a class="marca" href="#" aria-label="Início">
       <span class="marca-dot" aria-hidden="true"></span>
       finanças
     </a>
-    <nav class="topnav" aria-label="Calculadoras">
+    <nav class="topnav" aria-label="Atalhos">
       <a href="#juros">juros</a>
       <a href="#correcao">correção</a>
       <a href="#salario">salário</a>
     </nav>
   </header>
 
-  <main id="inicio">
-    <section class="hero" aria-labelledby="titulo">
+  <main>
+    <section class="hero" id="hero" aria-labelledby="titulo">
       <div class="hero-texto">
         <p class="hero-linha">$ finanças --modo simples</p>
         <h1 id="titulo">Seu dinheiro, em contas claras.</h1>
-        <p class="hero-sub">Três calculadoras para entender um número de cada vez. Você digita, o resultado aparece com a conta explicada.</p>
+        <p class="hero-sub">Dezenas de calculadoras para decidir melhor sobre dinheiro, trabalho, impostos e o dia a dia. Você digita, o resultado aparece com a conta explicada.</p>
         <a class="btn-primario" href="#juros">Abrir juros compostos <span aria-hidden="true">→</span></a>
       </div>
 
@@ -42,152 +42,27 @@
 <span class="dim">montante final</span>          <span class="verde">R$ 99.931,93</span>
 <span class="prompt">$</span> <span class="cursor" aria-hidden="true">_</span></pre>
       </div>
-
-      <ul class="comandos" aria-label="Comandos disponíveis">
-        <li><a href="#juros"><code>calc juros</code><span>Quanto rende um investimento com aportes mensais</span></a></li>
-        <li><a href="#correcao"><code>calc correcao</code><span>Quanto vale hoje um valor de uma data passada</span></a></li>
-        <li><a href="#salario"><code>calc salario</code><span>Quanto sobra do salário depois do INSS e do IR</span></a></li>
-      </ul>
     </section>
 
-    <!-- ============ JUROS COMPOSTOS ============ -->
-    <section class="calc" id="juros" aria-labelledby="t-juros">
-      <header class="calc-cabeca">
-        <p class="calc-cmd">$ calc juros</p>
-        <h2 id="t-juros">Juros compostos</h2>
-        <p class="calc-desc">Seu dinheiro rende sobre o que já rendeu. Informe quanto começa, quanto entra todo mês e por quanto tempo.</p>
-      </header>
-
-      <div class="calc-grade">
-        <form class="painel entrada" id="form-juros" novalidate>
-          <label class="campo">
-            <span class="rotulo">Valor inicial</span>
-            <span class="input-moeda"><span>R$</span><input type="number" inputmode="decimal" min="0" step="0.01" id="j-inicial" value="1000"></span>
-          </label>
-          <label class="campo">
-            <span class="rotulo">Aporte mensal <em>quanto entra todo mês</em></span>
-            <span class="input-moeda"><span>R$</span><input type="number" inputmode="decimal" min="0" step="0.01" id="j-aporte" value="500"></span>
-          </label>
-          <label class="campo">
-            <span class="rotulo">Taxa anual <em>% ao ano</em></span>
-            <span class="input-sufixo"><input type="number" inputmode="decimal" min="0" step="0.01" id="j-taxa" value="10"><span>% a.a.</span></span>
-          </label>
-          <label class="campo">
-            <span class="rotulo">Prazo <em>em anos</em></span>
-            <span class="input-sufixo"><input type="number" inputmode="numeric" min="0" step="1" id="j-anos" value="10"><span>anos</span></span>
-          </label>
-          <button class="btn-primario" type="submit">Calcular</button>
-        </form>
-
-        <div class="painel saida" aria-live="polite">
-          <div class="saida-cabeca"><span>resultado</span><span class="tag">estimativa</span></div>
-          <dl class="resumo">
-            <div><dt>Total investido</dt><dd id="j-r-investido">—</dd></div>
-            <div><dt>Juros acumulados</dt><dd id="j-r-juros" class="verde">—</dd></div>
-            <div class="destaque"><dt>Montante final</dt><dd id="j-r-montante">—</dd></div>
-          </dl>
-          <p class="explica" id="j-explica"></p>
-          <details class="detalhe">
-            <summary>Ver a conta</summary>
-            <pre class="formula">M = P·(1+i)^n + A·((1+i)^n − 1) / i
-i = (1 + taxa anual)^(1/12) − 1
-P = valor inicial · A = aporte · n = meses</pre>
-          </details>
-          <details class="detalhe">
-            <summary>Ver mês a mês</summary>
-            <div class="tabela-wrap">
-              <table class="tabela">
-                <thead><tr><th>mês</th><th>investido</th><th>juros</th><th>saldo</th></tr></thead>
-                <tbody id="j-tabela"></tbody>
-              </table>
-            </div>
-          </details>
-        </div>
-      </div>
+    <section class="catalogo" id="catalogo" aria-label="Todas as calculadoras">
+      <div id="catalogo-lista"></div>
     </section>
 
-    <!-- ============ CORREÇÃO DE VALORES ============ -->
-    <section class="calc" id="correcao" aria-labelledby="t-correcao">
-      <header class="calc-cabeca">
-        <p class="calc-cmd">$ calc correcao</p>
-        <h2 id="t-correcao">Correção de valores</h2>
-        <p class="calc-desc">Dinheiro perde poder de compra com a inflação. Informe o valor de antes e a variação do índice no período para ver quanto ele vale hoje.</p>
-      </header>
-
-      <div class="calc-grade">
-        <form class="painel entrada" id="form-correcao" novalidate>
-          <label class="campo">
-            <span class="rotulo">Valor original</span>
-            <span class="input-moeda"><span>R$</span><input type="number" inputmode="decimal" min="0" step="0.01" id="c-valor" value="1000"></span>
-          </label>
-          <label class="campo">
-            <span class="rotulo">Variação acumulada <em>do índice no período</em></span>
-            <span class="input-sufixo"><input type="number" inputmode="decimal" step="0.01" id="c-variacao" value="25.5"><span>%</span></span>
-          </label>
-          <p class="dica">Use a variação acumulada de IPCA ou IGP-M no período, que você encontra no site do Banco Central. Os valores padrão são só exemplo.</p>
-          <button class="btn-primario" type="submit">Corrigir</button>
-        </form>
-
-        <div class="painel saida" aria-live="polite">
-          <div class="saida-cabeca"><span>resultado</span><span class="tag">estimativa</span></div>
-          <dl class="resumo">
-            <div><dt>Valor original</dt><dd id="c-r-original">—</dd></div>
-            <div><dt>Diferença</dt><dd id="c-r-diferenca" class="verde">—</dd></div>
-            <div class="destaque"><dt>Valor corrigido</dt><dd id="c-r-corrigido">—</dd></div>
-          </dl>
-          <p class="explica" id="c-explica"></p>
-          <details class="detalhe">
-            <summary>Ver a conta</summary>
-            <pre class="formula">valor corrigido = valor original × (1 + variação)</pre>
-          </details>
-        </div>
-      </div>
-    </section>
-
-    <!-- ============ SALÁRIO LÍQUIDO ============ -->
-    <section class="calc" id="salario" aria-labelledby="t-salario">
-      <header class="calc-cabeca">
-        <p class="calc-cmd">$ calc salario</p>
-        <h2 id="t-salario">Salário líquido</h2>
-        <p class="calc-desc">Descontos do INSS e do Imposto de Renda tiram parte do bruto. Veja o que realmente cai na conta.</p>
-      </header>
-
-      <div class="calc-grade">
-        <form class="painel entrada" id="form-salario" novalidate>
-          <label class="campo">
-            <span class="rotulo">Salário bruto <em>antes dos descontos</em></span>
-            <span class="input-moeda"><span>R$</span><input type="number" inputmode="decimal" min="0" step="0.01" id="s-bruto" value="6000"></span>
-          </label>
-          <label class="campo">
-            <span class="rotulo">Dependentes <em>para o IR</em></span>
-            <span class="input-sufixo"><input type="number" inputmode="numeric" min="0" step="1" id="s-dep" value="0"><span>pessoas</span></span>
-          </label>
-          <p class="dica">Cálculo mensal, sem 13º, férias, horas extras ou outros benefícios. Tabelas de referência: confira as atuais na Previdência Social e na Receita Federal.</p>
-          <button class="btn-primario" type="submit">Calcular</button>
-        </form>
-
-        <div class="painel saida" aria-live="polite">
-          <div class="saida-cabeca"><span>resultado</span><span class="tag">estimativa</span></div>
-          <dl class="resumo">
-            <div><dt>INSS</dt><dd id="s-r-inss">—</dd></div>
-            <div><dt>Imposto de Renda</dt><dd id="s-r-irrf">—</dd></div>
-            <div class="destaque"><dt>Salário líquido</dt><dd id="s-r-liquido">—</dd></div>
-          </dl>
-          <p class="explica" id="s-explica"></p>
-          <details class="detalhe">
-            <summary>Ver a conta</summary>
-            <pre class="formula" id="s-formula"></pre>
-          </details>
-        </div>
-      </div>
-    </section>
+    <section class="detalhe-pagina" id="detalhe" hidden></section>
   </main>
 
   <footer class="rodape">
     <p>Estimativas educativas. Não substituem contador, banco ou os órgãos oficiais. Nenhum dado seu é enviado ou salvo.</p>
   </footer>
 
+  <!-- Ordem importa: núcleo, catálogo, módulos de calculadoras, renderização. -->
   <script src="js/calc.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/catalogo.js"></script>
+  <script src="js/calc-essenciais.js"></script>
+  <script src="js/calc-investimentos.js"></script>
+  <script src="js/calc-credito-negocios.js"></script>
+  <script src="js/calc-trabalho-impostos.js"></script>
+  <script src="js/calc-cotidiano-saude.js"></script>
+  <script src="js/render.js"></script>
 </body>
 </html>
