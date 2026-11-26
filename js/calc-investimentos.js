@@ -49,9 +49,14 @@
   // Poupança: acima de 8,5% de Selic, 0,5% ao mês + TR; abaixo, 70% da Selic ao ano + TR.
   function taxaPoupancaAnualPct(selicPct, trPct) {
     const selic = Number(selicPct) || 0;
-    const base = selic > SELIC_LIMITE_POUPANCA ? (Math.pow(1.005, 12) - 1) * 100 : 0.7 * selic;
     const tr = Number(trPct) || 0;
-    return ((1 + base / 100) * (1 + tr / 100) - 1) * 100;
+    if (selic > SELIC_LIMITE_POUPANCA) {
+      // Selic acima de 8,5%: 0,5% ao mês (composto) mais TR.
+      const base = (Math.pow(1.005, 12) - 1) * 100;
+      return ((1 + base / 100) * (1 + tr / 100) - 1) * 100;
+    }
+    // Selic até 8,5%: 70% da Selic ao ano, sem TR somada.
+    return 0.7 * selic;
   }
 
   // Comparador de renda fixa para o mesmo valor e prazo. Isentos: poupança, LCI/LCA.
@@ -86,12 +91,13 @@
     const F = Number(alvo);
     const i = Math.pow(1 + (Number(taxaAnualPct) || 0) / 100, 1 / 12) - 1;
     if (P >= F) return 0;
-    if (i === 0) return A > 0 ? Math.ceil((F - P) / A) : NaN;
+    // Tolerância de 1e-9 evita arredondar para cima um resultado que já é inteiro.
+    if (i === 0) return A > 0 ? Math.ceil((F - P) / A - 1e-9) : NaN;
     const denom = P * i + A;
     if (denom <= 0) return NaN;
     const ratio = (F * i + A) / denom;
     if (ratio <= 1) return 0;
-    return Math.ceil(Math.log(ratio) / Math.log(1 + i));
+    return Math.ceil(Math.log(ratio) / Math.log(1 + i) - 1e-9);
   }
 
   function reservaEmergencia({ despesaMensal, meses }) {
@@ -187,8 +193,8 @@
           f.inteiro("dias", "Prazo em dias", 365),
           f.percentual("selic", "Selic anual", 15, "% ao ano"),
           f.percentual("tr", "TR anual", 0, "% ao ano, 0 se não souber"),
-          f.percentual("cdb", "CDB: taxa anual", 110, "% do CDI ou taxa fixa, ao ano"),
-          f.percentual("lci", "LCI/LCA: taxa anual", 90, "% ao ano"),
+          f.percentual("cdb", "CDB: taxa anual", 12, "% ao ano, taxa fixa"),
+          f.percentual("lci", "LCI/LCA: taxa anual", 10, "% ao ano, taxa fixa"),
         ],
         calcular(v) {
           const r = comparadorRendaFixa({
@@ -205,7 +211,7 @@
             grafico: { tipo: "barras", titulo: "Valor líquido no fim do prazo", dados: r.opcoes.map((o) => ({ rot: o.nome, valor: o.liquido, destaque: o.nome === r.melhor })), formato: "dinheiro" },
             explica: `Com estes números, a melhor opção líquida é ${r.melhor}. A poupança rende cerca de ${r.poupancaAnualPct.toFixed(2).replace(".", ",")}% ao ano com a Selic informada.`,
             formula: "rendimento = valor × ((1 + taxa anual)^(dias/365) − 1)\nIR regressivo no CDB: 22,5% até 180 dias; 20% até 360; 17,5% até 720; 15% acima",
-            aviso: "Não inclui IOF nem taxas de corretora. Taxas de CDB e LCI variam por banco.",
+            aviso: "Não inclui IOF nem as regras de cada título (carência, resgate antecipado, taxas). Taxas de CDB e LCI variam por banco.",
           };
         },
       },
@@ -231,7 +237,7 @@
             grafico: { tipo: "rosca", titulo: "Composição do valor final", dados: [{ rot: "Valor aplicado", valor: r.valor }, { rot: "Rendimento líquido", valor: r.rendimentoLiquido, destaque: true }, { rot: "Imposto de Renda", valor: r.ir }], formato: "dinheiro" },
             explica: `Rendimento líquido de ${brl(r.rendimentoLiquido)} depois do IR.`,
             formula: "IR = rendimento bruto × alíquota regressiva pelo prazo",
-            aviso: "Não inclui IOF (só para resgates em até 30 dias) nem taxas de custódia.",
+            aviso: "Não inclui IOF (só para resgates em até 30 dias) nem as regras de cada título (carência, resgate antecipado, taxas de custódia).",
           };
         },
       },
@@ -247,6 +253,7 @@
         ],
         calcular(v) {
           const cap = capitalParaRenda({ rendaMensal: v.renda, taxaAnualPct: v.taxa });
+          if (!Number.isFinite(cap)) return { itens: [], explica: "Informe uma taxa anual maior que zero." };
           return {
             itens: [
               { rot: "Capital necessário", valor: cap, tipo: "dinheiro", destaque: true },
@@ -273,13 +280,14 @@
         calcular(v) {
           const n = mesesAteAlvo({ inicial: v.inicial, aporte: v.aporte, taxaAnualPct: v.taxa, alvo: 1000000 });
           if (!Number.isFinite(n)) {
-            return { itens: [], explica: "Com aporte zero e sem valor inicial, o milhão não é alcançado." };
+            return { itens: [], explica: "Com estes números o saldo nunca chega a R$ 1.000.000. Sem aporte e sem rendimento, o dinheiro não cresce." };
           }
           const anos = Math.floor(n / 12);
           const meses = n % 12;
+          const prazo = `${anos} ${anos === 1 ? "ano" : "anos"} e ${meses} ${meses === 1 ? "mês" : "meses"}`;
           return {
             itens: [
-              { rot: "Tempo até R$ 1 milhão", valor: `${anos} anos e ${meses} meses`, tipo: "texto", destaque: true },
+              { rot: "Tempo até R$ 1 milhão", valor: prazo, tipo: "texto", destaque: true },
               { rot: "Meses", valor: n, tipo: "inteiro" },
             ],
             grafico: (() => {
@@ -296,7 +304,7 @@
               }
               return { tipo: "linha", titulo: "Patrimônio mês a mês", rotulos, series: [{ rot: "Patrimônio", valores: patrimonio }, { rot: "Meta de R$ 1 milhão", valores: meta, cor: "var(--texto-3)" }], formato: "dinheiro" };
             })(),
-            explica: `Aportando ${brl(v.aporte)} por mês, a ${v.taxa}% ao ano, você chega a R$ 1.000.000 em ${anos} anos e ${meses} meses.`,
+            explica: `Aportando ${brl(v.aporte)} por mês, a ${v.taxa}% ao ano, você chega a R$ 1.000.000 em ${prazo}.`,
             formula: "(1+i)^n = (F·i + A) ÷ (P·i + A)",
           };
         },
